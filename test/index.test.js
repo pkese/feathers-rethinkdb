@@ -16,9 +16,11 @@ let counter = 0;
 
 const expect = chai.expect;
 const _ids = {};
+const idProp = 'customId';
 const app = feathers().use('/people', service({
   Model: r,
-  name: 'people'
+  name: 'people',
+  id: idProp,
 }).extend({
   _find(params) {
     params = params || {};
@@ -66,7 +68,7 @@ function create(done) {
               tableExists, {
                 created: 0
               },
-              table.tableCreate('todos')
+              table.tableCreate('todos', {primaryKey:idProp})
             );
           }).run(),
         table.tableList().contains('people')
@@ -75,7 +77,7 @@ function create(done) {
               tableExists, {
                 created: 0
               },
-              table.tableCreate('people')
+              table.tableCreate('people', {primaryKey:idProp})
             );
           }).run()
       ]);
@@ -98,7 +100,7 @@ describe('feathers-rethinkdb', () => {
         age: 32
       }, {})
       .then(data => {
-        _ids.Doug = data.id;
+        _ids.Doug = data[idProp];
         done();
       })
       .catch(err => {
@@ -124,7 +126,7 @@ describe('feathers-rethinkdb', () => {
       people.once('created', person => {
         expect(person.name).to.equal('Marshall Thompson');
         expect(person.counter).to.equal(counter);
-        table.get(person.id).delete().run();
+        table.get(person[idProp]).delete().run();
       });
 
       people.once('removed', person => {
@@ -144,14 +146,14 @@ describe('feathers-rethinkdb', () => {
       people.once('created', person => {
         expect(person.name).to.equal('Marshall Thompson');
         person.name = 'Marshall T.';
-        table.get(person.id).replace(person).run();
+        table.get(person[idProp]).replace(person).run();
       });
 
       people.once('patched', person => expect(person.name).to.equal('Marshall T.'));
 
       people.once('updated', person => {
         expect(person.name).to.equal('Marshall T.');
-        table.get(person.id).delete().run();
+        table.get(person[idProp]).delete().run();
       });
 
       people.once('removed', () => done());
@@ -163,7 +165,7 @@ describe('feathers-rethinkdb', () => {
     });
   });
 
-  base(people, _ids, errors.types);
+  base(people, _ids, errors.types, idProp);
 });
 
 describe('RethinkDB service example test', () => {
@@ -172,5 +174,5 @@ describe('RethinkDB service example test', () => {
   before(() => server = require('../example/app'));
   after(done => server.close(() => done()));
 
-  example('id');
+  example('customId');
 });

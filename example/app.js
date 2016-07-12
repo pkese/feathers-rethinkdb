@@ -10,13 +10,15 @@ const r = rethink({
   db: 'feathers'
 });
 
+const idField = 'customId';
+
 r.db('feathers').tableList().contains('todos')
   .do(function(tableExists) {
     return r.branch(
       tableExists, {
         created: 0
       },
-      r.db('feathers').tableCreate('todos')
+      r.db('feathers').tableCreate('todos', {primaryKey:idField})
     );
   }).run();
 
@@ -24,6 +26,7 @@ let counter = 0;
 const todoService = service({
   Model: r,
   name: 'todos',
+  id: idField,
   paginate: {
     default: 2,
     max: 4
